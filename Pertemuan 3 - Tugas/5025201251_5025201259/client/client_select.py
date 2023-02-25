@@ -14,7 +14,18 @@ try:
         message = input(">> ")
         client_socket.send(bytes(message, 'utf-8'))
         received_data = client_socket.recv(buffer_size).decode('utf-8')
-        print(f"Received : {received_data}")
+        if received_data.startswith("!download"):
+            datas = received_data.split(" ")
+            filename = datas[1]
+            with open(filename, "wb") as f:
+                while True:
+                    received_data = client_socket.recv(buffer_size)
+                    if received_data.decode() == "!finish":
+                        break
+                    f.write(received_data)
+        else:
+            print(f"Received : {received_data}")
+
 
 except KeyboardInterrupt:
     client_socket.close()

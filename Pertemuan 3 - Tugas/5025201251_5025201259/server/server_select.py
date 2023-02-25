@@ -7,9 +7,26 @@ server_port = 6969
 buffer_size = 1024
 
 
-def send_file(filename):
-
-    pass
+def send_file(sock, filename):
+    try:
+        with open(f"files/{filename}", "rb") as f:
+            #!download is a flag for download
+            sock.send(str.encode(f"!download {filename}"))
+            size = len(filename)
+            left = 0
+            while True:
+                right = left + buffer_size
+                if right >= size:
+                    right = size
+                data_to_send = filename[left:right]
+                sock.send(data_to_send)
+                if right == size:
+                    break
+                left += buffer_size
+        #!finish is a flag for finish
+        sock.send(str.encode("!finish"))
+    except:
+        sock.send(str.encode("File does not exist"))
 
 
 
@@ -38,16 +55,17 @@ def main():
                         data = data.decode()
                         datas = data.split(" ")
                         if datas[0] == "download":
-                            send_file(datas[1])
+                            send_file(sock, datas[1])
                         print(datas)
                     
-                        if data:
+                        if data != "":
                             sock.send(str.encode(datas[0]))
                         else:                    
                             sock.close()
                             input_socket.remove(sock)
                     except:
-                        break
+                        sock.close()
+                        input_socket.remove(sock)
     except KeyboardInterrupt:        
         server_socket.close()
         sys.exit(0)
