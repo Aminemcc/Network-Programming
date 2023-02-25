@@ -9,20 +9,11 @@ buffer_size = 1024
 
 def send_file(sock, filename):
     try:
-        with open(f"files/{filename}", "rb") as f:
+        with open(f"files\\{filename}", "rb") as f:
             #!download is a flag for download
             sock.send(str.encode(f"!download {filename}"))
-            size = len(filename)
-            left = 0
-            while True:
-                right = left + buffer_size
-                if right >= size:
-                    right = size
-                data_to_send = filename[left:right]
+            while data_to_send := f.read(buffer_size):
                 sock.send(data_to_send)
-                if right == size:
-                    break
-                left += buffer_size
         #!finish is a flag for finish
         sock.send(str.encode("!finish"))
     except:
@@ -56,13 +47,12 @@ def main():
                         datas = data.split(" ")
                         if datas[0] == "download":
                             send_file(sock, datas[1])
-                        print(datas)
-                    
-                        if data != "":
-                            sock.send(str.encode(datas[0]))
-                        else:                    
-                            sock.close()
-                            input_socket.remove(sock)
+                        else:
+                            if data != "":
+                                sock.send(str.encode(datas[0]))
+                            else:                    
+                                sock.close()
+                                input_socket.remove(sock)
                     except:
                         sock.close()
                         input_socket.remove(sock)

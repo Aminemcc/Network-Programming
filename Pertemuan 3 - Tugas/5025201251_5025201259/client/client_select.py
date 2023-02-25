@@ -17,12 +17,21 @@ try:
         if received_data.startswith("!download"):
             datas = received_data.split(" ")
             filename = datas[1]
-            with open(filename, "wb") as f:
+            with open(f"files\\{filename}", "wb") as f:
                 while True:
-                    received_data = client_socket.recv(buffer_size)
-                    if received_data.decode() == "!finish":
-                        break
+                    print("Downloading")
+                    try:
+                        received_data = client_socket.recv(buffer_size)
+                        print(received_data)
+                        print("\n-\n")
+                        if received_data.decode().endswith("!finish"):
+                            f.write(received_data[0:-len("!finish")])
+                            print("Finished")
+                            break
+                    except:
+                        pass
                     f.write(received_data)
+            continue
         else:
             print(f"Received : {received_data}")
 
