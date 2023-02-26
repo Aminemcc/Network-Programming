@@ -25,7 +25,7 @@ try:
                 
                 if(len(cmd) == 2):
                     if(cmd[0]=='download'):
-                        download_file = os.getcwd() +'/files/'+cmd[1]
+                        download_file = download_file = os.getcwd() +'/5025201251_5025201259/server/files/'+cmd[1]
                         
                         if(os.path.exists(download_file) == False):
                             sock.send('Requested File Not Found'.encode('utf-8'))
@@ -36,7 +36,7 @@ try:
                             req_data = f.read(1024) 
                             
                             if(req_data):
-                                print('Sending...')
+                                print('file-name:\t' + cmd[1] + '\nfile-size: \t' + str(os.path.getsize(download_file)) + ' bytes' +'\nSending...')
                                 sock.send(req_data)
                             
                             f.close()  
