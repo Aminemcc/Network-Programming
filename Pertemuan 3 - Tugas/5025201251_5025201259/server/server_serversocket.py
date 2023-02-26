@@ -1,11 +1,12 @@
 import socketserver
 import random
-
+import os
 
 class MyTCPHandler(socketserver.BaseRequestHandler):
 
     def setup(self):
         self.BUFFERSIZE = 1024
+        self.PATH = f"files"
 
     def handle(self):
         self.data = self.request.recv(self.BUFFERSIZE).strip()
@@ -15,9 +16,10 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
             self.filename = " ".join(self.datas[1:]).strip()
             print(f"Opening {self.filename}")
             try:
-                with open(f"files\\{self.filename}", "rb") as f:
+                with open(f"{self.PATH}\\{self.filename}", "rb") as f:
                     print(f"Sending {self.filename} to {self.client_address[0]}")
-                    self.request.sendall(bytes(f"!download {self.filename}","utf-8"))
+                    self.filesize = os.path.getsize(f"{self.PATH}\\{self.filename}")
+                    self.request.sendall(bytes(f"!download,\nfile-name: {self.filename},\nfile-size: {self.filesize},\n\n\n","utf-8"))
                     i = 1
                     while line := f.readline():
                         # print(f"{i}")

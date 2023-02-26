@@ -25,9 +25,14 @@ data_to_send = input(">> ")
 sock.sendall(bytes(data_to_send , "utf-8"))
 
 received = str(sock.recv(BUFFERSIZE), "utf-8")
-datas = received.split(" ")
+datas = received.split(",\n")
 if datas[0] == "!download":
-    download_file(sock, " ".join(datas[1:]))
+    filesize = datas[2].split(" ")[1]
+    filename = " ".join(datas[1].split(" ")[1:])
+    filename = filename.strip()
+    print(f"{datas[1]}\n{datas[2]}")
+    print(f"name : {filename}\nsize : {filesize}")
+    download_file(sock, filename)
 else :
     print("Sent:     {}".format(data_to_send))
     print("Received: {}".format(received))
