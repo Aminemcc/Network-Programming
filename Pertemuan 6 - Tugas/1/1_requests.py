@@ -1,3 +1,3 @@
 import requests
-req = requests.get("https://www.its.ac.id")
+req = requests.get("https://classroom.its.ac.id/")
 print(req.links)
