@@ -2,7 +2,7 @@ import socket
 import sys
 import os
 
-server_address = ('127.0.0.1', 5002)
+server_address = ('1', 5002)
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect(server_address)
 
