@@ -22,7 +22,7 @@ while True:
     response += received.decode('utf-8')
 
 header = re.search(r"(\w*)/([\w.]*)\s*(\b\d{3}\b)\s*([\w ]*)",response)
-
+print(header)
 soup = BeautifulSoup(response, features="html.parser")
 
 try:

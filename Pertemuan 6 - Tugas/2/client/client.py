@@ -24,22 +24,45 @@ sock.connect((HOST, PORT))
 
 #GET [filename] [no protocol needed for client.py]
 data_to_send = input(">> ")
-filename = re.findall("(\w+) ([\w ]+)$")[1]
+match = re.search("(\w+)\s.*/([\w.\s\-\_]+)", data_to_send)
+if not bool(match):
+    match = re.search("(\w+)\s+([\w.\s\-\_]+)", data_to_send)
+filename = match.group(2)
 print(filename)
 sock.sendall(bytes(data_to_send , "utf-8"))
+response = sock.recv(BUFFERSIZE)
+sock.close()
 
-received = str(sock.recv(BUFFERSIZE), "utf-8")
+try:
+    response_header = str(response[0:25], "utf-8")
+    # print(response)
+    header = re.search(r"(\w+)/([\w.]+)\s+(\b\d{3}\b)\s+([\w ]+)", response_header)
+    print(f"Protocol     : {header.group(1)}")
+    print(f"Version      : {header.group(2)}")
+    print(f"Status       : {header.group(3)}")
+    print(f"Message      : {header.group(4)}")
+except:
+    pass
+try:
+    status = header.group(3)
+    message = header.group(4)
+except:
+    status = "200"
+    message = ""
 
-with open
+if status == "200" and data_to_send.startswith("DOWNLOAD"):
+    with open(filename, "wb") as f:
+        f.write(response)
+elif status == "200" and data_to_send.startswith("GET"):
+    print("<--Start FILE-->\n")
+    try:
+        response = str(response, "utf-8")
+        for line in response.splitlines():
+            print(line)
+    except:
+        print(response)
+        pass
+    print("\n<--ENDOF FILE-->\n")
+else:
+    print(f"ERROR : {status} {message}")
 
-datas = received.split(",\n")
-if datas[0] == "!download":
-    filesize = datas[2].split(" ")[1]
-    filename = " ".join(datas[1].split(" ")[1:])
-    filename = filename.strip()
-    print(f"{datas[1]}\n{datas[2]}")
-    print(f"name : {filename}\nsize : {filesize}")
-    download_file(sock, filename)
-else :
-    print("Sent:     {}".format(data_to_send))
-    print("Received: {}".format(received))
