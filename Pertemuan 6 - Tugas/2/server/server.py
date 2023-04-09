@@ -156,7 +156,7 @@ def main():
         except KeyboardInterrupt:
             print("STOP!!")
             for thread in threads:
-                threads[thread].terminate() 
+                threads[thread].join()
             server_socket.close()
             sys.exit(0)
 
