@@ -15,10 +15,10 @@ class SMTP:
         self.email = input("Email    : ")
         self.password = getpass.getpass("Password : ")
         status = self.smtpserver.login(self.email, self.password)
-        print(status)
 
     def close(self):
         status = self.smtpserver.close()
+        print(status)
         return status
     
     def writeMessage(self, subject, content, dst):

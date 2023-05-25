@@ -97,6 +97,7 @@ class Solution:
         pass
 
     def nomor6(self):
+        #Karena saat melakukan close tidak ada pesan pada debug level dan pada return function nya, maka kosongan
         pass
 
 def main():
