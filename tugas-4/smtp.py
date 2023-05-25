@@ -21,22 +21,24 @@ class SMTP:
         status = self.smtpserver.close()
         return status
     
-    def writeMessage(self, subject, dst):
+    def writeMessage(self, subject, content, dst):
         """
         Subject : The subject of the email
-        src : the sender email
         dst : the receiver email
+        content : The content of the email
         """
         msg = EmailMessage()
         msg["Subject"] = subject
         msg["From"] = self.email
         msg["to"] = dst
+        msg.set_content(content)
         return msg
 
     def sendMessage(self):
-        subject = input("Subject  : ")
         destination = input("TO : ")
-        msg = self.writeMessage(subject, destination)
+        subject = input("Subject  : ")
+        content = input("Content  : ")
+        msg = self.writeMessage(subject, content, destination)
         try:
             status = self.smtpserver.send_message(msg)
             print("Message sent successfully!")
@@ -55,8 +57,6 @@ class SMTP:
     def set_debuglevel(self, level):
         self.smtpserver.set_debuglevel(level)
 
-    def set_debuglogger(self, logger):
-        self.smtpserver.set_debuglogger(logger)
 
 def main():
     smtp = SMTP()
