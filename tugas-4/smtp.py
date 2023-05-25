@@ -2,6 +2,7 @@ import smtplib
 from email.message import EmailMessage
 import logging
 import getpass
+import sys
 
 class SMTP:
     def __init__(self):
@@ -15,30 +16,28 @@ class SMTP:
         self.email = input("Email    : ")
         self.password = getpass.getpass("Password : ")
         status = self.smtpserver.login(self.email, self.password)
+        print(status)
 
     def close(self):
         status = self.smtpserver.close()
-        print(status)
         return status
     
-    def writeMessage(self, subject, content, dst):
+    def writeMessage(self, subject, dst):
         """
         Subject : The subject of the email
+        src : the sender email
         dst : the receiver email
-        content : The content of the email
         """
         msg = EmailMessage()
         msg["Subject"] = subject
         msg["From"] = self.email
         msg["to"] = dst
-        msg.set_content(content)
         return msg
 
     def sendMessage(self):
-        destination = input("TO : ")
         subject = input("Subject  : ")
-        content = input("Content  : ")
-        msg = self.writeMessage(subject, content, destination)
+        destination = input("TO : ")
+        msg = self.writeMessage(subject, destination)
         try:
             status = self.smtpserver.send_message(msg)
             print("Message sent successfully!")
@@ -57,17 +56,27 @@ class SMTP:
     def set_debuglevel(self, level):
         self.smtpserver.set_debuglevel(level)
 
+    def set_debuglogger(self, logger):
+        self.smtpserver.set_debuglogger(logger)
+        
+class StderrLogger(object):
+
+    def __init__(self,logger):
+        self.logger = logger
+
+    def write(self, message):
+        self.logger.debug(message)
 
 def main():
     smtp = SMTP()
-    
+    orig_std = (sys.stdout, sys.stderr)
+    sys.stdout = sys.stderr = open("./t.txt", "a")
+    # smtplib stuff
+    # sys.stdout, sys.stderr = orig_std
     # Configure logging
-    logging.basicConfig(filename="smtp_debug.log", level=logging.DEBUG)
-    logger = logging.getLogger("SMTPDebug")
     smtp.smtpserver.set_debuglevel(1)
-    smtp.smtpserver._logger = logger
     smtp.smtpserver.debugging = True
-
+    # smtp.smtpserver.stderr = StderrLogger(logger)
     smtp.ehlo()
     smtp.starttls()
     smtp.login()
