@@ -83,8 +83,10 @@ class Server:
                         if cmd in ["GET", "HEAD"]:
                             content, file_to_send, status = self.getFile(cmd, filename)
                             ext = os.path.splitext(file_to_send)[1][1:]
-                            header = self.generate_header(status=status, content_length=len(content), extension=ext)
-                            
+                            if ext == "html":
+                                header = self.generate_header(status=status, content_length=len(content))
+                            else:
+                                header = self.generate_header(status=status, content_length=len(content), extension=ext)
                             data_to_send = header.encode("utf-8")
                             if cmd == "GET":
                                 data_to_send += content
@@ -130,19 +132,13 @@ class Server:
         request = request_header[1][1:]
         return (cmd, request)
 
-    def getFile(self, path="", cmd="", filename="", status=200):
+    def getFile(self, cmd, filename):
         """
         Return : (file_data, status)
         file_data should be sent to the client with corresponding status
         """
-        if path == "":
-            path = self.frontend_path
-        if status != 200:
-            # It returns an error html page according to the status
-             with open(os.path.join(path, f"{status}.html"), "rb") as f:
-                return (f.read(), f"{status}.html", status)
-
         _filename = filename
+        status = 200
         if filename in ["/", ""]:
             _filename = "index.html"
         elif os.path.basename(filename)[0] == ".":
@@ -151,22 +147,13 @@ class Server:
             status = 403
         else:
             pass
-        _filepath = os.path.join(path, _filename)
-        print(_filepath)
+        _filepath = os.path.join(self.frontend_path, _filename)
         try:
             with open(_filepath, "rb") as f:
                 return (f.read(), _filename, status)
         except FileNotFoundError as e:
-            with open(os.path.join(path, "404.html"), "rb") as f:
+            with open(os.path.join(self.frontend_path, "404.html"), "rb") as f:
                 return (f.read(), "404.html", 404)
-
-    def download(self, request):
-        match = re.search("name=[\'\"]\w*[\'\"][\r\n]*([\w\s\.]+)", request)
-        print(match)
-        if match:
-            self.getFile(path=self.download_path, filename=match.group(1))
-        else:
-            return self.getFile(status=404)
 
     def generate_header(self, protocol="HTTP", version="1.1", status=200, extension="html", charset="utf-8",content_length=0):
         if status == 200:
@@ -181,6 +168,8 @@ class Server:
             message = "Internal Server Error"
         else:
             message = "Others"
+        if extension != "html":
+            extension = extension
         header = f"{protocol}/{version} {status} {message}"
         header += "\r\n"
         if status not in [404]:
