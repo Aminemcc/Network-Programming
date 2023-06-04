@@ -151,7 +151,7 @@ class Server:
         else:
             message = "Others"
         if extension != "html":
-            extension = "plain"
+            extension = extension
         header = f"{protocol}/{version} {status} {message}"
         header += "\r\n"
         if status not in [404]:
