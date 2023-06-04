@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Web</title>
+    <link rel="stylesheet" href="../Download/download.css">
+    <link rel="stylesheet" href="../Upload/upload.css">
+    <link rel="stylesheet" href="../index.css">
+    <script type="text/javascript" src="../Download/download.js"></script>
+</head>
+
+<body>
+  <input class="menu-icon" type="checkbox" id="menu-icon" name="menu-icon"/>
+  <label for="menu-icon"></label>
+  <nav class="nav"> 		
+      <ul class="pt-5">
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="../Upload/upload.html">Upload File</a></li>
+          <li><a href="../Download/download.html">Download File</a></li>
+          <li><a href="#">Get All Data</a></li>
+          <li><a href="#">About This Project</a></li>
+      </ul>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <h3>Download Files</h3>
+      <div class="formbg-inner">
+        <form id="stripe-login">
+          <div class="field padding-bottom--24 padding-top--24">
+            <label for="name_file">Nama File</label>
+            <input type="text" name="nama_file">
+          </div>
+
+          <div class="field padding-bottom--20 padding-top--20">
+            <input type="submit" name="submit" value="Continue">
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="myModal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>Server Response</h3>
+      <p id="responseMessage"></p>
+    </div>
+  </div>
+
+</body>
+</html>
