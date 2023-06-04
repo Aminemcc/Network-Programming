@@ -8,27 +8,23 @@ import threading
 
 class Server:
     def __init__(self, config_file : str = "httpserver.conf", buffer_size : int = 2048):
-        #self == server
-        self.base_path = os.getcwd()
-        self.frontend_path = os.path.join(self.base_path, "..", "Frontend")
-        self.download_path = os.path.join(self.base_path, "files")
-        self.upload_path   = os.path.join(self.base_path, "files")
-
+        self.frontend_path = os.path.join(os.getcwd(), "../Frontend")
+        self.backend_path = os.path.join(os.getcwd(), "./files")
         self.buffer_size = buffer_size
         self.isRunning = False
         self.config = self.read_config(config_file)
         self.address = (self.config["ip"], self.config["port"])
         self.socket = self.init_socket()
-        
-        self.timeout = 1
+
+        self.timeout = 2
         self.clients = {}
         """
-        self.clients : 
+        self.clients :
             id :
                 thread, address, socket, status, lock
         """
         self.threads = [] #contain id of the thread, access the thread in clients
-        
+
         self.active_thread = 0
         self.count_thread = 0 # Will also become ID of thread
         self.count_thread_lock = threading.Lock()
@@ -44,7 +40,7 @@ class Server:
             except:
                 config[item[0]] = item[1]
         return config
-    
+
     def init_socket(self):
         _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         _socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -67,7 +63,7 @@ class Server:
             #hanya start jika server running
             thread.start()
         return True
-
+    
     def handler(self, id, socket, address):
         self.active_thread += 1
         self.threads.append(id)
@@ -82,7 +78,7 @@ class Server:
                     data = socket.recv(self.buffer_size)
                     if bool(data):
                         request_header = data.decode("utf-8")
-                        cmd, filename = (self.get_cmd_file(request_header))
+                        cmd, filename = self.get_cmd_file(request_header)
                         print(f"cmd : {cmd}, request file : {filename}")
                         if cmd in ["GET", "HEAD"]:
                             content, file_to_send, status = self.getFile(cmd, filename)
@@ -93,28 +89,23 @@ class Server:
                             if cmd == "GET":
                                 data_to_send += content
                             socket.sendall(data_to_send)
-
+                            
                         elif cmd == "POST":
-                            if "download" in filename:
-                                content, file_to_send, status = self.download(request_header)
-                                ext = os.path.splitext(file_to_send)[1][1:]
-                                header = self.generate_header(status=status, content_length=len(content), extension=ext)    
-                                data_to_send = header.encode("utf-8")
-                                data_to_send += content
-                                socket.sendall(data_to_send)
-                            elif "upload" in filename:
-                                pass
+                            # Handle POST request
+                            post_data = self.get_post_data(str(request_header))
+                            
+                            if post_data:
+                                print(f"Nama file: {post_data}")
+                                # ... additional processing ...
+                                response = b'HTTP/1.1 200 OK\n\nFile received.'
+                                socket.sendall(response)
                             else:
-                                # Bad Request
-                                content, file_to_send, status = self.getFile(status=400)
-                                ext = os.path.splitext(file_to_send)[1][1:]
-                                header = self.generate_header(status=status, content_length=len(content), extension=ext)
-                                
-                                data_to_send = header.encode("utf-8")
-                                data_to_send += content
-                                socket.sendall(data_to_send)
+                                response = b'HTTP/1.1 400 Bad Request\n\nInvalid request.'
+                                socket.sendall(response)
+                        elif cmd == "GET" and filename == "/download":
+                            self.handle_file_download(socket)
                         else:
-                            print("Command error") 
+                            print("Command error")
                     else:
                         #Stopping Client
                         self.clients[id]["status"] = False
@@ -124,7 +115,14 @@ class Server:
         finally:
             socket.close()
             self.active_thread -= 1
-        
+
+    def get_post_data(self, request_data):
+        pattern = r'Content-Disposition: form-data; name="nama_file"\r\n\r\n(.*?)[\r\n]+'
+        match = re.search(pattern, request_data, re.DOTALL)
+        if match:
+            return match.group(1)
+        return None
+
     def get_cmd_file(self, data):
         request_header = data.split('\r\n')
         request_header = request_header[0].split()
@@ -135,8 +133,7 @@ class Server:
     def getFile(self, path="", cmd="", filename="", status=200):
         """
         Return : (file_data, status)
-        file_data should be send to client with corresponding status
-
+        file_data should be sent to the client with corresponding status
         """
         if path == "":
             path = self.frontend_path
@@ -189,6 +186,8 @@ class Server:
         if status not in [404]:
             header += f"Content-Type: text/{extension}; charset={charset}\r\nContent-Length:{content_length}"
             header += "\r\n"
+        header += "Access-Control-Allow-Origin: *\r\n"
+        header += "Access-Control-Allow-Methods: GET, POST\r\n"  # Include allowed methods
         header += "\r\n"
         return header
 
@@ -214,7 +213,7 @@ class Server:
         for id in self.threads:
             self.clients[id]["status"] = False
             self.clients[id]["thread"].join()
-            
+
         self.socket.close()
         sys.exit(0)
 

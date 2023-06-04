@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini Web</title>
+    <title>Download File</title>
     <link rel="stylesheet" type="text/css" href="../Download/download.css">
     <link rel="stylesheet" type="text/css" href="../Upload/upload.css">
     <link rel="stylesheet" type="text/css" href="../index.css">
@@ -12,17 +12,17 @@
 </head>
 
 <body>
-  <input class="menu-icon" type="checkbox" id="menu-icon" name="menu-icon"/>
-  <label for="menu-icon"></label>
-  <nav class="nav"> 		 
-      <ul class="pt-5">
-          <li><a href="../index.html">Home</a></li>
-          <li><a href="../Upload/upload.html">Upload File</a></li>
-          <li><a href="download.html">Download File</a></li>
-          <li><a href="#">Get All Data</a></li>
-          <li><a href="#">About This Project</a></li>
-      </ul>
-  </nav>
+    <input class="menu-icon" type="checkbox" id="menu-icon" name="menu-icon"/>
+    <label for="menu-icon"></label>
+    <nav class="nav">         
+        <ul class="pt-5">
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="../Upload/upload.html">Upload File</a></li>
+            <li><a href="download.html">Download File</a></li>
+            <li><a href="#">Get All Data</a></li>
+            <li><a href="#">About This Project</a></li>
+        </ul>
+    </nav>
 
   <div class="container">
     <div class="card">
@@ -30,12 +30,11 @@
       <div class="formbg-inner">
         <form id="stripe-login">
           <div class="field padding-bottom--24 padding-top--24">
-            <label for="name_file">Nama File</label>
-            <input type="text" name="nama_file">
+            <label for="nama_file">File Name</label>
+            <input type="text" id="nama_file" name="nama_file">
           </div>
-
           <div class="field padding-bottom--20 padding-top--20">
-            <input type="submit" name="submit" value="Continue">
+            <input type="submit" name="submit" value="Download">
           </div>
         </form>
       </div>
