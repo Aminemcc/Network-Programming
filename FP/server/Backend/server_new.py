@@ -9,6 +9,7 @@ import threading
 class Server:
     def __init__(self, config_file : str = "httpserver.conf", buffer_size : int = 2048):
         #self == server
+        self.frontend_path = os.path.join(os.getcwd(), "../Frontend")
         self.buffer_size = buffer_size
         self.isRunning = False
         self.config = self.read_config(config_file)
@@ -118,21 +119,22 @@ class Server:
         file_data should be send to client with corresponding status
 
         """
-        temp = filename
+        _filename = filename
         status = 200
         if filename in ["/", ""]:
-            temp = "index.html"
+            _filename = "index.html"
         elif os.path.basename(filename)[0] == ".":
             # Forbidden 403
-            temp = "403.html"
+            _filename = "403.html"
             status = 403
         else:
             pass
+        _filepath = os.path.join(self.frontend_path, _filename)
         try:
-            with open(temp, "rb") as f:
-                return (f.read(), temp, status)
+            with open(_filepath, "rb") as f:
+                return (f.read(), _filename, status)
         except FileNotFoundError as e:
-            with open("404.html", "rb") as f:
+            with open(os.path.join(self.frontend_path, "404.html"), "rb") as f:
                 return (f.read(), "404.html", 404)
 
     def generate_header(self, protocol="HTTP", version="1.1", status=200, extension="html", charset="utf-8",content_length=0):
