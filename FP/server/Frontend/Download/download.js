@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function() {
       })
       .then(function (blob) {
         const url = URL.createObjectURL(blob);  // Create a URL for the Blob object
-        downloadFile(url);  // Call the downloadFile function to initiate the file download
+        downloadFile(url, formData);  // Pass formData as an argument to downloadFile function
       })
       .catch(function (error) {
         console.error(error);
@@ -47,15 +47,16 @@ document.addEventListener("DOMContentLoaded", function() {
       });
   }
 
-  function downloadFile(url) {
+  function downloadFile(url, formData) {
     const link = document.createElement("a");
     link.href = url;
-    link.download = "729.txt";  // Provide a default file name for the downloaded file
+    const filename = formData.get("nama_file");
+    link.download = filename || "unknown";
+  
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   }
-  
   
 
   const form = document.getElementById("stripe-login");
