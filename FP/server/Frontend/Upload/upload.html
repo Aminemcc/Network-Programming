@@ -15,7 +15,7 @@
     <label for="menu-icon"></label>
     <nav class="nav"> 		
         <ul class="pt-5">
-          <li><a href="../index.html">Home</a></li>
+            <li><a href="../index.html">Home</a></li>
             <li><a href="upload.html">Upload File</a></li>
             <li><a href="../Download/download.html">Download File</a></li>
             <li><a href="#">Get All Data</a></li>
@@ -29,12 +29,36 @@
             <header>
               <h4>Select File here</h4>
             </header>
-            <p>Files Supported: PDF, TEXT, DOC , DOCX</p>
+            <p>Files Supported: PDF, TEXT, DOC, DOCX</p>
             <input type="file" hidden accept=".doc,.docx,.pdf" id="fileID" style="display:none;">
-            <button class="btn">Choose File</button>
+            <button class="btn" onclick="uploadFile()">Choose File</button>
           </div>
-      
         </div>
-      </div>
+    </div>
+
+    <script type="text/javascript">
+        function uploadFile() {
+            var fileInput = document.getElementById('fileID');
+            var file = fileInput.files[0];
+
+            var formData = new FormData();
+            formData.append('file', file);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'server.py', true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        // File uploaded successfully
+                        console.log('File uploaded successfully.');
+                    } else {
+                        // Error occurred while uploading the file
+                        console.error('Error occurred while uploading the file.');
+                    }
+                }
+            };
+            xhr.send(formData);
+        }
+    </script>
 </body>
 </html>

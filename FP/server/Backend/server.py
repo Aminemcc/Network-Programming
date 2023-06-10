@@ -35,7 +35,7 @@ class Server:
         self.active_thread_lock = threading.Lock()
         self.count_thread = 0 # Will also become ID of thread
         self.count_thread_lock = threading.Lock()
-        self.max_active_thread = 0
+        self.max_active_thread = 10
 
     def read_config(self, filename):
         conf_file = open(filename, "r")
@@ -133,6 +133,8 @@ class Server:
                 elif not self.isRunning:
                     #timeout
                     self.clients[id]["status"] = False
+        except ConnectionResetError as e:
+            pass
         finally:
             socket.close()
             self.clients[id]["status"] = False
