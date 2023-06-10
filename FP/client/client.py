@@ -28,8 +28,18 @@ match = re.search("(\w+)\s.*/([\w.\s\-\_]+)", data_to_send)
 if not bool(match):
     match = re.search("(\w+)\s+([\w.\s\-\_]+)", data_to_send)
 filename = match.group(2)
+original_data = data_to_send
 print(filename)
-sock.sendall(bytes(data_to_send , "utf-8"))
+
+if data_to_send.startswith("POST"):
+    data_to_send = bytes(data_to_send , "utf-8")
+    data_to_send += b"\r\n"
+    with open(filename, "rb") as f:
+        data_to_send += f.read()
+else:
+    data_to_send = bytes(data_to_send , "utf-8")
+
+sock.sendall(data_to_send)
 response = sock.recv(BUFFERSIZE)
 sock.close()
 
@@ -50,10 +60,12 @@ except:
     status = "200"
     message = ""
 
-if status == "200" and data_to_send.startswith("DOWNLOAD"):
+if status == "200" and original_data.startswith("GET /download/"):
     with open(filename, "wb") as f:
         f.write(response)
-elif status == "200" and data_to_send.startswith("GET"):
+elif status == "200" and original_data.startswith("POST /upload/"):
+    print("Upload Successfull, try download the file again to see if it really works")
+else:
     print("<--Start FILE-->\n")
     try:
         response = str(response, "utf-8")
@@ -63,6 +75,5 @@ elif status == "200" and data_to_send.startswith("GET"):
         print(response)
         pass
     print("\n<--ENDOF FILE-->\n")
-else:
-    print(f"ERROR : {status} {message}")
+
 

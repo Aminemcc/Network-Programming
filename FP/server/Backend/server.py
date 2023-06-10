@@ -60,7 +60,7 @@ class Server:
             if self.active_thread > self.max_active_thread:
                 #Doesn't accept any more client at the moment
                 print("MAX THREAD")
-                content, _, status = self.getFile("503.html")
+                content, _, status = self.getFile(filename = "503.html")
                 header = self.generate_header(status=status,content_length=len(content))
                 socket.sendall(header + content)
                 return False
@@ -91,9 +91,8 @@ class Server:
                 if socket in read_ready:
                     data = socket.recv(self.buffer_size)
                     if bool(data):
-                        
-                        request_header = data.decode("utf-8")
-                        cmd, filename = self.get_cmd_file(request_header)
+                        request = data.decode("utf-8")
+                        cmd, filename = self.get_cmd_file(request)
                         print(f"cmd : {cmd}, request file : {filename}")
                         if cmd in ["GET", "HEAD"]:
                             content, file_to_send, status = self.getFile(cmd, filename)
@@ -109,7 +108,23 @@ class Server:
                             
                         elif cmd == "POST":
                             # Handle POST request
-                            pass
+                            splitted = filename.split("/")
+                            status = 201
+                            if len(splitted) < 2:
+                                status = 400
+                            else:
+                                content, status = self.get_body(data)
+                            if status == 400:
+                                content, filename, status = self.getFile(filename="400.html")
+                            else:    
+                                with open(os.path.join(self.upload_path, splitted[1]), "wb") as f:
+                                    f.write(content)
+                            if status != 400:
+                                content, filename, status = self.getFile(filename="201.html")
+                            header = self.generate_header(status=status, content_length=len(content))
+                            data_to_send = header + content
+                            socket.sendall(data_to_send)
+
                         else:
                             print("Command error")
                     else:
@@ -136,6 +151,13 @@ class Server:
         cmd = request_header[0]
         request = request_header[1][1:]
         return (cmd, request)
+
+    def get_body(self, data):
+        request_header = data.split(b'\r\n')
+        length = len(request_header)
+        if length < 2:
+            return ("", 400)
+        return (request_header[1], 200)
 
     def getFile(self, cmd="", filename=""):
         """
@@ -212,6 +234,8 @@ class Server:
     def generate_header(self, protocol="HTTP", version="1.1", status=200, extension="html", charset="utf-8",content_length=0):
         if status == 200:
             message = "OK"
+        elif status == 201:
+            message = "Created"
         elif status == 301:
             message = "Moved Permanently"
         elif status == 403:
@@ -250,7 +274,7 @@ class Server:
                 for client in read_ready:
                     client_socket, client_address = self.socket.accept()
                     self.handle_new_client(client_socket, client_address)
-                print(f"Active user : {self.active_thread}")
+                # print(f"Active user : {self.active_thread}")
             except KeyboardInterrupt:
                 if not self.isMoved:
                     self.isMoved = True
