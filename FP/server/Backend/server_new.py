@@ -9,7 +9,10 @@ import threading
 class Server:
     def __init__(self, config_file : str = "httpserver.conf", buffer_size : int = 2048):
         self.frontend_path = os.path.join(os.getcwd(), "../Frontend")
-        self.backend_path = os.path.join(os.getcwd(), "./files")
+        self.backend_path = os.path.join(os.getcwd(), "files")
+        self.download_path = os.path.join(os.getcwd(), "files")
+        self.upload_path = os.path.join(os.getcwd(), "files")
+
         self.buffer_size = buffer_size
         self.isRunning = False
         self.config = self.read_config(config_file)
@@ -77,6 +80,15 @@ class Server:
                 if socket in read_ready:
                     data = socket.recv(self.buffer_size)
                     if bool(data):
+                        
+                        # if self.count_thread > self.max_active_thread:
+                        #     content, file_to_send, status = self.getFile("GET", "500.html")
+                        #     header = self.generate_header(status=status, content_length=len(content))
+                        #     data_to_send = header.encode("utf-8")
+                        #     data_to_send += content
+                        #     socket.sendall(data_to_send)
+                        #     continue
+
                         request_header = data.decode("utf-8")
                         cmd, filename = self.get_cmd_file(request_header)
                         print(f"cmd : {cmd}, request file : {filename}")
@@ -138,6 +150,7 @@ class Server:
         file_data should be sent to the client with corresponding status
         """
         _filename = filename
+        is_html = True
         status = 200
         if filename in ["/", ""]:
             _filename = "index.html"
@@ -145,9 +158,12 @@ class Server:
             # Forbidden 403
             _filename = "403.html"
             status = 403
-        else:
-            pass
-        _filepath = os.path.join(self.frontend_path, _filename)
+        elif "download" in _filename and "html" not in _filename:
+            _filename = _filename.split("/")[-1]
+            print(_filename)
+            is_html = False
+        if is_html: _filepath = os.path.join(self.frontend_path, _filename)
+        else: _filepath = os.path.join(self.download_path, _filename)
         try:
             with open(_filepath, "rb") as f:
                 return (f.read(), _filename, status)
