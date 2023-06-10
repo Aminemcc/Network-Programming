@@ -20,6 +20,27 @@ document.addEventListener("DOMContentLoaded", function () {
         if (xhr.status === 200) {
           // File uploaded successfully
           console.log('File uploaded successfully.');
+
+          // Display modal notification
+          const modal = document.getElementById("myModal");
+          const modalContent = modal.querySelector(".modal-content");
+          const closeBtn = modal.querySelector(".close");
+          const responseMessage = modal.querySelector("#responseMessage");
+
+          responseMessage.textContent = "File uploaded successfully.";
+          modal.style.display = "block";
+
+          // Close the modal when close button is clicked
+          closeBtn.onclick = function() {
+            modal.style.display = "none";
+          };
+
+          // Close the modal when user clicks outside the modal
+          window.onclick = function(event) {
+            if (event.target == modal) {
+              modal.style.display = "none";
+            }
+          };
         } else {
           // Error occurred while uploading the file
           console.error('Error occurred while uploading the file.');

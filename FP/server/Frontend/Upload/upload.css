@@ -21,13 +21,16 @@
 }
 
 .modal-content {
-  background-color: #fefefe;
+  background-color: #f8f8f8; /* Update the background color of the modal content */
   margin: 10% auto;
   padding: 20px;
   border: 1px solid #888;
   width: 80%;
   max-width: 400px;
 }
+
+/* Rest of your CSS code */
+
 
 body {
     font-family: 'Montserrat', sans-serif;
