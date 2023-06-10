@@ -13,7 +13,7 @@ def read_config(filename):
         except:
             config[item[0]] = item[1]
     return config
-config = read_config("../server/httpserver.conf")
+config = read_config("httpserver.conf")
 HOST = config["ip"]
 PORT = config["port"] 
 
