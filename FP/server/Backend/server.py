@@ -16,6 +16,7 @@ class Server:
         self.buffer_size = buffer_size
         self.isRunning = False
         self.isMoved = False
+        self.isMovedLock = threading.Lock()
         self.prefixMoved = "api"
 
         self.config = self.read_config(config_file)
@@ -90,6 +91,7 @@ class Server:
                 read_ready, _, _ = select.select([socket], [], [], self.timeout)
                 if socket in read_ready:
                     data = socket.recv(self.buffer_size)
+                    print(data)
                     if bool(data):
                         try:
                             request = data.decode("utf-8")
@@ -126,8 +128,8 @@ class Server:
                                 with open(os.path.join(self.upload_path, splitted[1]), "wb") as f:
                                     f.write(content)
                             if status != 400:
-                                content, filename, status = self.getFile(filename="201.html")
-                            header = self.generate_header(status=status, content_length=len(content))
+                                content, filename, status = self.getFile()
+                            header = self.generate_header(status=200, content_length=len(content))
                             data_to_send = header + content
                             socket.sendall(data_to_send)
 
@@ -189,43 +191,45 @@ class Server:
         is_html = True
         status = 200
         moved = False
-
-        if self.isMoved:
-            #Must start with "api/ or self.prefixMoved"
-            if request[0] != self.prefixMoved:
-                moved = True
-            else:
-                request.pop(0) #pop the prefix
-                _filename = "/".join(request)
-        else:
-            try:
-                if request[0] == self.prefixMoved:
-                    moved = True
-            except:
-                pass
-        
-        if moved:
+        with self.isMovedLock:
             if self.isMoved:
-                # User try to access exp : index.html without the new prefix "api/"
-                _filename = "301.html"
-                status = 301
+                #Must start with "api/ or self.prefixMoved"
+                if request[0] != self.prefixMoved:
+                    moved = True
+                else:
+                    request.pop(0) #pop the prefix
+                    _filename = "/".join(request)
             else:
-                # User try to access exp : api/index.html, but the server is not moved yet
-                # The server is not ready for this request yet
-                _filename = "500.html"
-                status = 500
-        elif not bool(request):
-            _filename = "400.html"
-            status = 400
-        elif dot_prefix:
-            # Forbidden 403
-            _filename = "403.html"
-            status = 403
-        elif _filename == "":
-            _filename = "index.html"
-        elif request[0] == "download":
-            _filename = "/".join(request[1:])
-            is_html = False
+                try:
+                    if request[0] == self.prefixMoved:
+                        moved = True
+                except:
+                    pass
+            
+            if moved:
+                if self.isMoved:
+                    # User try to access exp : index.html without the new prefix "api/"
+                    print(filename)
+                    _filename = "301.html"
+                    status = 301
+                else:
+                    # User try to access exp : api/index.html, but the server is not moved yet
+                    # The server is not ready for this request yet
+                    _filename = "500.html"
+                    status = 500
+        if status == 200:
+            if not bool(request):
+                _filename = "400.html"
+                status = 400
+            elif dot_prefix:
+                # Forbidden 403
+                _filename = "403.html"
+                status = 403
+            elif _filename == "":
+                _filename = "index.html"
+            elif request[0] == "download":
+                _filename = "/".join(request[1:])
+                is_html = False
 
         if is_html: _filepath = os.path.join(self.frontend_path, _filename)
         else: _filepath = os.path.join(self.download_path, _filename)
