@@ -35,7 +35,7 @@ class Server:
         self.active_thread_lock = threading.Lock()
         self.count_thread = 0 # Will also become ID of thread
         self.count_thread_lock = threading.Lock()
-        self.max_active_thread = 10
+        self.max_active_thread = 0
 
     def read_config(self, filename):
         conf_file = open(filename, "r")
@@ -57,11 +57,11 @@ class Server:
     def handle_new_client(self, socket, address):
         # Function to initiate the thread and call self._handler
         with self.active_thread_lock:
-            if self.active_thread >= self.max_active_thread:
+            if self.active_thread > self.max_active_thread:
                 #Doesn't accept any more client at the moment
                 print("MAX THREAD")
-                content, status = self.getFile("503.html")
-                header = self.generate_header(status=503)
+                content, _, status = self.getFile("503.html")
+                header = self.generate_header(status=status,content_length=len(content))
                 socket.sendall(header + content)
                 return False
             self.active_thread += 1
@@ -250,7 +250,7 @@ class Server:
                 for client in read_ready:
                     client_socket, client_address = self.socket.accept()
                     self.handle_new_client(client_socket, client_address)
-                # print(f"Active user : {self.active_thread}")
+                print(f"Active user : {self.active_thread}")
             except KeyboardInterrupt:
                 if not self.isMoved:
                     self.isMoved = True
