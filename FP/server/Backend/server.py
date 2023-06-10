@@ -79,7 +79,7 @@ class Server:
         return True
     
     def handler(self, id, socket, address):
-        print(f"Listening to : {address}")
+        # print(f"Listening to : {address}")
         self.threads.append(id)
         with self.clients[id]["lock"]:
             self.clients[id]["address"] = address
@@ -91,7 +91,11 @@ class Server:
                 if socket in read_ready:
                     data = socket.recv(self.buffer_size)
                     if bool(data):
-                        request = data.decode("utf-8")
+                        try:
+                            request = data.decode("utf-8")
+                        except UnicodeDecodeError as e:
+                            request = data
+                            print("There's an eror : ", e)
                         cmd, filename = self.get_cmd_file(request)
                         print(f"cmd : {cmd}, request file : {filename}")
                         if cmd in ["GET", "HEAD"]:
@@ -108,6 +112,7 @@ class Server:
                             
                         elif cmd == "POST":
                             # Handle POST request
+                            # "data : POST /upload/filename ...\r\nisifiledalambyteds"
                             splitted = filename.split("/")
                             status = 201
                             if len(splitted) < 2:
@@ -117,6 +122,7 @@ class Server:
                             if status == 400:
                                 content, filename, status = self.getFile(filename="400.html")
                             else:    
+                                print(content)
                                 with open(os.path.join(self.upload_path, splitted[1]), "wb") as f:
                                     f.write(content)
                             if status != 400:
@@ -155,7 +161,8 @@ class Server:
         return (cmd, request)
 
     def get_body(self, data):
-        request_header = data.split(b'\r\n')
+        print(data)
+        request_header = data.split(b'\r\n\r\n')
         length = len(request_header)
         if length < 2:
             return ("", 400)
@@ -222,7 +229,7 @@ class Server:
 
         if is_html: _filepath = os.path.join(self.frontend_path, _filename)
         else: _filepath = os.path.join(self.download_path, _filename)
-        print(_filepath)
+        # print(_filepath)
         try:
             with open(_filepath, "rb") as f:
                 return (f.read(), _filename, status)
