@@ -96,6 +96,8 @@ class Server:
                     # print(f"data from {self.clients[id]['address']}")
                     if not bool(data):
                         #Stopping Client
+                        if isPostContent:
+                            print(f'{_filename} upload successfully')
                         self.clients[id]["status"] = False
                         continue
                     if isPostContent and data[:3] != b"GET" and data[:4] != b"POST":
@@ -107,7 +109,8 @@ class Server:
                         # "data : POST /upload/filename ...\r\nisifiledalambyteds"
                         try:
                             _filename = self.get_post_data(data)
-                            header = self.generate_header(status=200)
+                            status=200
+                            header = self.generate_header(status=status)
                             content = b""
                             isPostContent = True
                         except:
@@ -138,7 +141,9 @@ class Server:
                         else:
                             print("Command error")
                 elif not self.isRunning:
-                    #timeout
+                    #timeout]
+                    if isPostContent:
+                        print(f'{_filename} uploaded successfully')
                     self.clients[id]["status"] = False
         except ConnectionResetError as e:
             pass
@@ -168,7 +173,7 @@ class Server:
             i += 1
         filename = temp.decode("utf-8")
         content = request_data[i+1:]
-        print(content[:100])
+        # print(content[:100])
         splitted = filename.split("/")
         if splitted[0] == "":
             splitted.pop(0)  
