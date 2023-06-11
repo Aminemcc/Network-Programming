@@ -208,7 +208,7 @@ class Server:
                     # User try to access exp : index.html without the new prefix "api/"
                     print(filename)
                     _filename = "301.html"
-                    status = 200
+                    status = 301
                     #status = 301 #IS dangerous because the browser will read it from cache, so we need to delete cache everytime we run
                 else:
                     # User try to access exp : api/index.html, but the server is not moved yet
@@ -233,8 +233,16 @@ class Server:
         else: _filepath = os.path.join(self.download_path, _filename)
         # print(_filepath)
         try:
-            with open(_filepath, "rb") as f:
-                return (f.read(), _filename, status)
+            if(status == 301):
+                with open(_filepath, "rb") as f:
+                    page = f.read()
+                page = page.decode("utf-8")
+                page = page.replace("12345abc", f"http://{self.config['ip']}:{self.config['port']}/api/{filename}")
+                page= page.encode("utf-8")
+                return (page, _filename, 200)
+            else:
+                with open(_filepath, "rb") as f:
+                    return (f.read(), _filename, status)
         except FileNotFoundError as e:
             with open(os.path.join(self.frontend_path, "404.html"), "rb") as f:
                 return (f.read(), "404.html", 404)
