@@ -7,7 +7,7 @@ import threading
 
 
 class Server:
-    def __init__(self, config_file : str = "httpserver.conf", buffer_size : int = 2048):
+    def __init__(self, config_file : str = "httpserver.conf", buffer_size : int = 1 << 30):
         self.frontend_path = os.path.join(os.getcwd(), "../Frontend")
         self.backend_path = os.path.join(os.getcwd(), "files")
         self.download_path = os.path.join(os.getcwd(), "files")
@@ -87,17 +87,38 @@ class Server:
             self.clients[id]["socket"] = socket
             self.clients[id]["status"] = True
         try:
+            isPostContent = False
+            _filename = ""
             while self.clients[id]["status"]:
                 read_ready, _, _ = select.select([socket], [], [], self.timeout)
                 if socket in read_ready:
                     data = socket.recv(self.buffer_size)
-                    print(data)
-                    if bool(data):
+                    print(f"data from {self.clients[id]['address']}")
+                    if not bool(data):
+                        #Stopping Client
+                        self.clients[id]["status"] = False
+                        continue
+                    if isPostContent and data[:3] != b"GET" and data[:4] != b"POST":
+                        #extra content because buffer is not enough while uploding
+                        with open(_filename, "ab") as f:
+                            f.write(content)
+                    elif data[:4] == b"POST":
+                        # Handle POST request 
+                        # "data : POST /upload/filename ...\r\nisifiledalambyteds"
                         try:
-                            request = data.decode("utf-8")
-                        except UnicodeDecodeError as e:
-                            request = data
-                            print("There's an eror : ", e)
+                            self.get_post_data(data)
+                            content, filename, status = self.getFile()
+                            isPostContent = True
+                        except:
+                            content, filename, status = self.getFile(filename="400.html")
+                        finally:
+                            header = self.generate_header(status=status, content_length=len(content))
+                            data_to_send = header + content
+                            socket.sendall(data_to_send)
+                        continue
+                    else:
+                        isPostContent = False
+                        request = data.decode("utf-8")
                         cmd, filename = self.get_cmd_file(request)
                         print(f"cmd : {cmd}, request file : {filename}")
                         if cmd in ["GET", "HEAD"]:
@@ -112,32 +133,9 @@ class Server:
                                 data_to_send += content
                             socket.sendall(data_to_send)
                             
-                        elif cmd == "POST":
-                            # Handle POST request
-                            # "data : POST /upload/filename ...\r\nisifiledalambyteds"
-                            splitted = filename.split("/")
-                            status = 201
-                            if len(splitted) < 2:
-                                status = 400
-                            else:
-                                content, status = self.get_body(data)
-                            if status == 400:
-                                content, filename, status = self.getFile(filename="400.html")
-                            else:    
-                                print(content)
-                                with open(os.path.join(self.upload_path, splitted[1]), "wb") as f:
-                                    f.write(content)
-                            if status != 400:
-                                content, filename, status = self.getFile()
-                            header = self.generate_header(status=200, content_length=len(content))
-                            data_to_send = header + content
-                            socket.sendall(data_to_send)
 
                         else:
                             print("Command error")
-                    else:
-                        #Stopping Client
-                        self.clients[id]["status"] = False
                 elif not self.isRunning:
                     #timeout
                     self.clients[id]["status"] = False
@@ -149,11 +147,37 @@ class Server:
             self.active_thread -= 1
 
     def get_post_data(self, request_data):
-        pattern = r'Content-Disposition: form-data; name="nama_file"\r\n\r\n(.*?)[\r\n]+'
-        match = re.search(pattern, request_data, re.DOTALL)
-        if match:
-            return match.group(1)
-        return None
+        """
+        Return type (filename, filecontent)
+        """
+        # print(request_data)
+        temp = b""
+        i = len("POST ")
+        print("->>>  ", end=" ")
+        print(request_data[0])
+        print(request_data[0:5])
+        print(request_data)
+        isAdded = False
+        while request_data[i:i+2] != b" H" and request_data[i+2:i+4] != "TT" and request_data[i+4:i+6] != "P/":
+            print(i, " : ", request_data[i:i+2])
+            if not isAdded:
+                temp += request_data[i:i+2]
+                isAdded = True
+            else:isAdded = False
+            i += 1
+        i += 2
+        while request_data[i-4:i] != b"\r\n\r\n":
+            print(i, " : ", request_data[i-4:i])
+            i += 1
+        filename = temp.decode("utf-8")
+        content = request_data[i+1:]
+        splitted = filename.split("/")
+        if splitted[0] == "":
+            splitted.pop(0)  
+        _filename = os.path.join(self.upload_path, splitted[1])  
+        with open(_filename, "wb") as f:
+            f.write(content)
+
 
     def get_cmd_file(self, data):
         request_header = data.split('\r\n')
@@ -211,7 +235,8 @@ class Server:
                     # User try to access exp : index.html without the new prefix "api/"
                     print(filename)
                     _filename = "301.html"
-                    status = 301
+                    status = 200
+                    #status = 301 #IS dangerous because the browser will read it from cache, so we need to delete cache everytime we run
                 else:
                     # User try to access exp : api/index.html, but the server is not moved yet
                     # The server is not ready for this request yet
